@@ -5,7 +5,9 @@ export interface Horse {
   name: string;
   condition: number;
   color: string;
-  position: number; 
+  position: number;
+  finishTime?: number;
+  finished?: boolean;
 }
 
 export interface RaceSchedule {
@@ -17,21 +19,25 @@ const RACE_DISTANCES = [1200, 1400, 1600, 1800, 2000, 2200];
 
 export const useGameStore = defineStore('game', {
   state: () => ({
-    horsePool: [] as Horse[],       
-    currentRaceIndex: 0,            
-    isRaceRunning: false,           
-    raceProgram: RACE_DISTANCES,    
-    schedule: [] as RaceSchedule[], // 6 yarışın önceden hazırlanan programı
-    results: [] as Array<Horse[]>,  
+    horsePool: [] as Horse[],
+    currentRaceIndex: 0,
+    isRaceRunning: false,
+    raceProgram: RACE_DISTANCES,
+    schedule: [] as RaceSchedule[],
+    results: [] as Array<Horse[]>,
     animationFrameId: null as number | null,
+
+    // Timing
+    raceStartTime: 0,
+    lastFrameTime: 0,
   }),
 
   getters: {
-    // O an koşan yarışı döndürür
     activeRaceHorses(): Horse[] {
       if (this.schedule[this.currentRaceIndex]) {
         return this.schedule[this.currentRaceIndex].horses;
       }
+
       return [];
     }
   },
@@ -39,55 +45,94 @@ export const useGameStore = defineStore('game', {
   actions: {
     generateHorsePool() {
       const names = [
-        'Bold Pilot', 'Asilhan', 'Rüzgar', 'Şahbatur', 'Gülbatur',
-        'Storm', 'Thunder', 'Black Beauty', 'Pegasus', 'Eclipse',
-        'Gazi', 'Yıldırım', 'Poyraz', 'Dolunay', 'Gece',
-        'Ateş', 'Savaşçı', 'Efsane', 'Asil', 'Rüzgar Gülü'
+        'Bold Pilot',
+        'Asilhan',
+        'Rüzgar',
+        'Şahbatur',
+        'Gülbatur',
+        'Storm',
+        'Thunder',
+        'Black Beauty',
+        'Pegasus',
+        'Eclipse',
+        'Gazi',
+        'Yıldırım',
+        'Poyraz',
+        'Dolunay',
+        'Gece',
+        'Ateş',
+        'Savaşçı',
+        'Efsane',
+        'Asil',
+        'Rüzgar Gülü'
       ];
 
       this.horsePool = Array.from({ length: 20 }, (_, i) => {
-        const hue = (i * 18) % 360; 
+        const hue = (i * 18) % 360;
+
         return {
           id: i + 1,
           name: names[i] || `Horse ${i + 1}`,
           condition: Math.floor(Math.random() * 100) + 1,
           color: `hsl(${hue}, 70%, 50%)`,
           position: 0,
+          finishTime: undefined,
+          finished: false,
         };
       });
 
       this.generateProgram();
     },
 
-    // 6 Yarışın hepsini birden önceden oluşturuyoruz (Locked Spec)
     generateProgram() {
       this.results = [];
       this.currentRaceIndex = 0;
       this.isRaceRunning = false;
-      if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
-      
+
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+      }
+
       this.schedule = this.raceProgram.map((distance) => {
-        // Her yarış için 20 attan rastgele 10 tanesini seç
-        const shuffled = [...this.horsePool].sort(() => 0.5 - Math.random());
-        const selectedHorses = shuffled.slice(0, 10).map(horse => ({
+        // Karıştır
+        const shuffled = [...this.horsePool].sort(
+          () => Math.random() - 0.5
+        );
+
+        // 10 at seç
+        const selectedHorses = shuffled.slice(0, 10).map((horse) => ({
           ...horse,
-          position: 0 // Yarışın başlangıç konumu
+          position: 0,
+          finishTime: undefined,
+          finished: false,
         }));
+
         return {
           distance,
-          horses: selectedHorses
+          horses: selectedHorses,
         };
       });
     },
 
     startRace() {
-      if (this.isRaceRunning || this.currentRaceIndex >= this.schedule.length) return;
+      if (
+        this.isRaceRunning ||
+        this.currentRaceIndex >= this.schedule.length
+      ) {
+        return;
+      }
+
+      this.raceStartTime = performance.now();
+      this.lastFrameTime = performance.now();
+
       this.isRaceRunning = true;
+
       this.gameLoop();
     },
 
     pauseRace() {
       this.isRaceRunning = false;
+
       if (this.animationFrameId) {
         cancelAnimationFrame(this.animationFrameId);
       }
@@ -96,44 +141,87 @@ export const useGameStore = defineStore('game', {
     gameLoop() {
       if (!this.isRaceRunning) return;
 
-      let raceFinished = false;
+      const now = performance.now();
+
+      // FPS bağımsız sistem
+      const deltaTime = (now - this.lastFrameTime) / 16.67;
+
+      this.lastFrameTime = now;
+
       const currentRace = this.schedule[this.currentRaceIndex];
       const currentDistance = currentRace.distance;
 
       currentRace.horses.forEach((horse) => {
-        if (horse.position >= 100) return;
+        if (horse.finished) return;
 
-        // Gelişmiş Koşu Formülü
-        const baseSpeed = 0.15;
-        const conditionFactor = (horse.condition / 100) * 0.12;
-        const rngFactor = Math.random() * 0.22;
-        const distanceModifier = currentDistance / 2000; 
+        // Temel hız
+        const baseSpeed = 0.18;
 
-        const tickProgress = baseSpeed + (conditionFactor * distanceModifier) + rngFactor;
-        horse.position = Math.min(100, horse.position + tickProgress);
+        // Kondisyon bonusu
+        const conditionFactor =
+          (horse.condition / 100) * 0.15;
 
+        // Rastgele tempo
+        const rngFactor = Math.random() * 0.20;
+
+        // Kısa yarışlar daha hızlı
+        const distanceModifier = 2000 / currentDistance;
+
+        // Final hız
+        const tickProgress =
+          (
+            baseSpeed +
+            conditionFactor +
+            rngFactor
+          ) *
+          distanceModifier;
+
+        // Delta time ile FPS bağımsız ilerleme
+        horse.position += tickProgress * deltaTime;
+
+        // Finish
         if (horse.position >= 100) {
-          // Tüm atların yarışı bitirip bitirmediğini kontrol et
-          raceFinished = currentRace.horses.every(h => h.position >= 100);
+          horse.position = 100;
+          horse.finished = true;
+
+          // Finish zamanı
+          horse.finishTime =
+            performance.now() - this.raceStartTime;
         }
       });
 
-      if (raceFinished) {
+      // Herkes finish yaptı mı?
+      const allFinished = currentRace.horses.every(
+        (horse) => horse.finished
+      );
+
+      if (allFinished) {
         this.handleRaceFinish();
       } else {
-        this.animationFrameId = requestAnimationFrame(this.gameLoop);
+        this.animationFrameId = requestAnimationFrame(() =>
+          this.gameLoop()
+        );
       }
     },
 
     handleRaceFinish() {
       this.isRaceRunning = false;
-      if (this.animationFrameId) cancelAnimationFrame(this.animationFrameId);
+
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+      }
 
       const currentRace = this.schedule[this.currentRaceIndex];
-      // Atları varış derecesine (pozisyonuna) göre sırala
-      const finishedOrder = [...currentRace.horses].sort((a, b) => b.position - a.position);
-      
+
+      // Gerçek finish sırası
+      const finishedOrder = [...currentRace.horses].sort(
+        (a, b) =>
+          (a.finishTime || Infinity) -
+          (b.finishTime || Infinity)
+      );
+
       this.results.push(finishedOrder);
+
       this.currentRaceIndex++;
     }
   }
