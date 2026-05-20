@@ -65,7 +65,7 @@
           </span>
         </div>
 
-        <div class="track-header" v-else>
+        <div v-else class="track-header">
           <h3>Turnuva Tamamlandı</h3>
         </div>
 
@@ -104,6 +104,7 @@
       <!-- SIDEBAR -->
       <section class="panel sidebar-panel">
 
+        <!-- PROGRAM -->
         <div class="program-section">
           <h3>Yarış Programı</h3>
 
@@ -130,7 +131,7 @@
           </div>
         </div>
 
-        <!-- 🔥 FIX: SCROLL BURADA -->
+        <!-- RESULTS -->
         <div class="results-section">
           <h3>Sonuçlar</h3>
 
@@ -140,14 +141,14 @@
               :key="i"
               class="result-block"
             >
-              <h4>{{ store.raceProgram[i] }}m</h4>
+              <h4>{{ store.raceProgram[i] }}m Sonuç</h4>
 
               <ol>
                 <li
-                  v-for="horse in raceResult.slice(0, 3)"
+                  v-for="(horse, index) in raceResult.slice(0, 10)"
                   :key="horse.id"
                 >
-                  #{{ horse.id }} {{ horse.name }}
+                  {{ index + 1 }}. #{{ horse.id }} {{ horse.name }}
                 </li>
               </ol>
             </div>
@@ -213,6 +214,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
+/* HORSE LIST */
 .scroll-list {
   overflow-y: auto;
   height: 100%;
@@ -248,6 +250,7 @@ onMounted(() => {
   padding: 4px 8px;
   border-radius: 6px;
   color: white;
+  transition: left 0.1s linear;
 }
 
 /* FINISH */
@@ -262,7 +265,23 @@ onMounted(() => {
   text-align: center;
 }
 
-/* 🔥 FIX: RESULTS SCROLL */
+/* PROGRAM */
+.program-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px;
+}
+
+.program-item.active {
+  background: #e3f2fd;
+}
+
+.program-item.done {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+/* RESULTS SCROLL */
 .results-section {
   display: flex;
   flex-direction: column;
