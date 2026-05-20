@@ -25,6 +25,7 @@
     </header>
 
     <main class="game-layout">
+
       <!-- HORSE POOL -->
       <section class="panel horse-pool-panel">
         <h3>At Havuzu</h3>
@@ -57,9 +58,7 @@
           class="track-header"
           v-if="store.schedule[store.currentRaceIndex]"
         >
-          <h3>
-            {{ store.currentRaceIndex + 1 }}. Yarış
-          </h3>
+          <h3>{{ store.currentRaceIndex + 1 }}. Yarış</h3>
 
           <span class="distance-tag">
             {{ store.schedule[store.currentRaceIndex].distance }}m
@@ -70,10 +69,8 @@
           <h3>Turnuva Tamamlandı</h3>
         </div>
 
-        <div
-          class="race-track"
-          v-if="store.activeRaceHorses.length"
-        >
+        <div class="race-track" v-if="store.activeRaceHorses.length">
+
           <div
             v-for="(horse, index) in store.activeRaceHorses"
             :key="horse.id"
@@ -91,10 +88,7 @@
                   backgroundColor: horse.color
                 }"
               >
-                <span class="avatar-number">
-                  #{{ horse.id }}
-                </span>
-                🐎
+                #{{ horse.id }} 🐎
               </div>
             </div>
           </div>
@@ -102,17 +96,18 @@
           <div class="finish-line">FINISH</div>
         </div>
 
-        <div class="no-track" v-else>
+        <div v-else>
           Turnuva oluşturun
         </div>
       </section>
 
       <!-- SIDEBAR -->
       <section class="panel sidebar-panel">
+
         <div class="program-section">
           <h3>Yarış Programı</h3>
 
-          <div class="program-list" v-if="store.schedule.length">
+          <div class="program-list">
             <div
               v-for="(race, index) in store.schedule"
               :key="index"
@@ -122,9 +117,7 @@
                 done: index < store.currentRaceIndex
               }"
             >
-              <span>
-                {{ index + 1 }}. {{ race.distance }}m
-              </span>
+              <span>{{ index + 1 }}. {{ race.distance }}m</span>
 
               <span v-if="index === store.currentRaceIndex">
                 Koşuyor
@@ -137,10 +130,11 @@
           </div>
         </div>
 
+        <!-- 🔥 FIX: SCROLL BURADA -->
         <div class="results-section">
           <h3>Sonuçlar</h3>
 
-          <div v-if="store.results.length">
+          <div class="results-scroll">
             <div
               v-for="(raceResult, i) in store.results"
               :key="i"
@@ -157,11 +151,15 @@
                 </li>
               </ol>
             </div>
-          </div>
 
-          <p v-else>Henüz sonuç yok</p>
+            <p v-if="!store.results.length">
+              Henüz sonuç yok
+            </p>
+          </div>
         </div>
+
       </section>
+
     </main>
   </div>
 </template>
@@ -198,7 +196,6 @@ onMounted(() => {
 .controls button {
   margin-left: 10px;
   padding: 8px 12px;
-  cursor: pointer;
 }
 
 .game-layout {
@@ -221,13 +218,7 @@ onMounted(() => {
   height: 100%;
 }
 
-.horse-card {
-  display: flex;
-  gap: 10px;
-  padding: 8px;
-  border-bottom: 1px solid #eee;
-}
-
+/* TRACK */
 .race-track {
   position: relative;
   height: 100%;
@@ -242,13 +233,11 @@ onMounted(() => {
 
 .lane-number {
   width: 80px;
-  font-size: 12px;
 }
 
 .track-line {
   position: relative;
   flex: 1;
-  height: 100%;
   background: #eef2f7;
 }
 
@@ -259,10 +248,9 @@ onMounted(() => {
   padding: 4px 8px;
   border-radius: 6px;
   color: white;
-  font-weight: bold;
-  transition: left 0.1s linear;
 }
 
+/* FINISH */
 .finish-line {
   position: absolute;
   right: 0;
@@ -270,24 +258,27 @@ onMounted(() => {
   bottom: 0;
   width: 6px;
   background: red;
-  color: white;
-  font-size: 10px;
   writing-mode: vertical-rl;
   text-align: center;
 }
 
-.program-item {
+/* 🔥 FIX: RESULTS SCROLL */
+.results-section {
   display: flex;
-  justify-content: space-between;
-  padding: 6px;
+  flex-direction: column;
+  height: 50%;
 }
 
-.program-item.active {
-  background: #e3f2fd;
+.results-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 5px;
 }
 
-.program-item.done {
-  opacity: 0.5;
-  text-decoration: line-through;
+.result-block {
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #fafafa;
+  border-radius: 6px;
 }
 </style>
