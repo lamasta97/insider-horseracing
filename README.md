@@ -1,5 +1,21 @@
 # insider-horseracing
 
+## 🛠️ Kurulum ve Çalıştırma (Installation & Setup)
+
+Projenin bilgisayarınızda yerel olarak çalıştırılabilmesi için bilgisayarınızda **Node.js** (v18 veya üzeri önerilir) yüklü olmalıdır.
+
+Aşağıdaki adımları sırasıyla takip ederek projeyi ayağa kaldırabilirsiniz:
+
+### 1. Projeyi Klonlayın veya İndirin
+İlk olarak repoyu bilgisayarınıza indirin:
+```bash
+git clone <GITHUB_REPO_LINKINIZ>
+cd <KLASÖR_ADI>
+npm install
+npm run dev
+BU komutları kullanarak projeyi ayağa kaldırabilirsiniz
+http://localhost:5173). Bu bağlantıya tıklayarak at yarışı simülasyonunu hemen test etmeye başlayabilirsiniz!
+
 
 # Insider Frontend Internship - At Yarışı Uygulaması
 
